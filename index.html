@@ -15,9 +15,9 @@ html,body{height:100%;margin:0;background:var(--bg);color:var(--ink);font:15px/1
 .app{height:100%;display:flex;flex-direction:column}
 header{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:6px;padding:6px 12px}header .zoom{justify-self:center}
 header .r{justify-self:end;display:flex;align-items:center;gap:4px}
-.txt{background:none;border:0;color:var(--acc);font:inherit;min-height:40px;padding:0 10px;cursor:pointer;border-radius:12px;font-weight:400;letter-spacing:-.01em;white-space:nowrap}
+.txt{background:none;border:0;color:var(--acc);font:inherit;position:relative;min-height:32px;padding:0 10px;cursor:pointer;border-radius:99px;font-weight:400;letter-spacing:-.01em;white-space:nowrap;transition:opacity .15s,background .15s}.txt::after{content:"";position:absolute;inset:-6px -2px}.txt:active:not(:disabled){opacity:.5}#ndel{color:#ff3b30}
 .txt:disabled{color:var(--sub);opacity:.5}
-.txt.go{background:var(--acc);color:#fff;min-height:34px;padding:0 16px;border-radius:99px;font-weight:600}
+.txt.go{background:var(--acc);color:#fff;min-height:32px;padding:0 14px;border-radius:99px;font-weight:600}
 .glass{background:var(--glass);backdrop-filter:blur(24px) saturate(1.8);-webkit-backdrop-filter:blur(24px) saturate(1.8);box-shadow:var(--sh)}
 .zoom{display:flex;align-items:center;border-radius:99px;padding:3px}
 .zoom button{border:0;background:none;color:var(--ink);width:38px;height:38px;font-size:22px;font-weight:300;line-height:1;cursor:pointer;border-radius:99px}
@@ -100,7 +100,7 @@ header{animation:rise .7s cubic-bezier(.2,.8,.2,1) backwards}
 #hud{position:absolute;left:50%;bottom:14px;transform:translate(-50%,8px) scale(.92);padding:5px 16px;min-width:76px;text-align:center;line-height:1.25;border-radius:99px;font-size:20px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums lining-nums;opacity:0;pointer-events:none;z-index:3;transition:opacity .25s,transform .35s cubic-bezier(.34,1.4,.64,1)}
 #hud.on{opacity:1;transform:translate(-50%,0)}
 @media (max-width:360px){
-  header{padding:4px 8px;gap:2px;grid-template-columns:auto 1fr auto}.txt{padding:0 5px;font-size:14px}.txt.go{padding:0 12px}
+  header{padding:4px 8px;gap:2px;grid-template-columns:auto 1fr auto}.txt{padding:0 7px;font-size:14px}.txt.go{padding:0 12px}
   .zoom button{width:32px;height:36px;font-size:20px}.zoom button#zl{width:52px;font-size:14px}
   .panel{padding:10px 8px}.tools button{width:34px;height:34px}.tools i{margin:0 3px}.sw{gap:12px}
 }
@@ -127,6 +127,12 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 #sheet .seg{background:rgba(255,255,255,.18)}#sheet .seg::before{background:rgba(255,255,255,.3);box-shadow:none}#sheet .seg button{color:#fff}
 #qr{display:flex;align-items:center;gap:10px;color:#fff;font-size:13px;width:min(288px,100%)}#qr.off{display:none}#qr input{flex:1;width:auto}#qr b{width:40px;font-weight:500;text-align:right;font-variant-numeric:tabular-nums}
 .xrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}#sheet .txt{color:#fff}#sheet img{max-height:56%}
+
+#mm canvas{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none;border-radius:0;box-shadow:none}
+.ln{position:absolute;right:10px;top:50%;transform:translateY(-50%) scale(.9);display:flex;flex-direction:column;align-items:center;padding:3px;border-radius:99px;z-index:3;opacity:0;visibility:hidden;transition:opacity .25s,transform .35s cubic-bezier(.34,1.4,.64,1),visibility .25s}
+.ln.on{opacity:1;visibility:visible;transform:translateY(-50%)}
+.ln button{width:36px;height:36px;border:0;background:none;color:var(--ink);display:grid;place-items:center;border-radius:50%;cursor:pointer}.ln button:active{background:var(--sel)}.ln button:disabled{opacity:.3}
+.ln span{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;min-width:34px;text-align:center;padding:2px 0}
 </style>
 </head>
 <body>
@@ -146,7 +152,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
     <div class="zoom glass"><button id="zo" aria-label="Zoom out">&minus;</button><button id="zl" aria-label="Reset zoom to 100%" title="Reset zoom">100%</button><button id="zi" aria-label="Zoom in">+</button></div>
     <div class="r"><button class="txt" id="open">Open</button><button class="txt go" id="save">Save</button></div>
   </header>
-  <div class="stage"><canvas id="c"></canvas><div class="guide" id="guide"></div><div id="hud" class="glass" aria-hidden="true">100%</div><div class="pre glass" id="pre" role="group" aria-label="Zoom presets"><button data-z="1">Fit</button><button data-z="2">200%</button><button data-z="4">400%</button></div><div id="mm" class="glass" aria-hidden="true"><i id="mv"></i></div></div>
+  <div class="stage"><canvas id="c"></canvas><div class="guide" id="guide"></div><div id="hud" class="glass" aria-hidden="true">100%</div><div class="pre glass" id="pre" role="group" aria-label="Zoom presets"><button data-z="1">Fit</button><button data-z="w" hidden>Width</button><button data-z="2">200%</button><button data-z="4">400%</button></div><div id="mm" class="glass" aria-hidden="true"><canvas id="mmc"></canvas><i id="mv"></i></div><div class="ln glass" id="ln" role="group" aria-label="Line navigation"><button id="lu" aria-label="Previous line"><svg class="ic" viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button><span id="lc">1/1</span><button id="ld" aria-label="Next line"><svg class="ic" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button></div></div>
   <div class="dock"><div class="panel glass">
     <div class="row">
       <div class="seg" id="seg" role="group" aria-label="Snap mode"><button data-m="smart" aria-pressed="true">Smart</button><button data-m="straight" aria-pressed="false">Straight</button><button data-m="free" aria-pressed="false">Free</button></div></div>
@@ -178,7 +184,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 <div id="note" class="glass" role="dialog" aria-label="Note"><textarea id="nt" rows="3" maxlength="400" placeholder="Add a note to this highlight…"></textarea><div class="nrow"><button class="txt" id="ndel">Remove note</button><button class="txt go" id="ndone">Done</button></div></div>
 <div id="toast" class="glass" role="status"></div>
 <div id="sheet"><img id="shot" alt="Result"><p id="info"></p><div class="seg" id="fmt" role="group" aria-label="Export format"><button data-f="png" aria-pressed="true">PNG</button><button data-f="jpg" aria-pressed="false">JPG</button><button data-f="pdf" aria-pressed="false">PDF</button></div><label id="qr" class="off"><span>Quality</span><input type="range" id="q" min="50" max="100" value="92"><b id="qv">92%</b></label><div class="xrow"><button class="txt" id="share">Share</button><button class="txt" id="dl">Download</button><button class="txt" id="copy">Copy</button><button class="txt go" id="close">Done</button></div></div>
-<input type="file" id="file" accept="image/*" hidden>
+<input type="file" id="file" accept="image/*,.heic,.heif,.tif,.tiff,.bmp,.avif,.svg,.ico,.jfif,.webp" hidden>
 <script>
 const $=id=>document.getElementById(id);
 const cv=$('c'),ctx=cv.getContext('2d'),stage=document.querySelector('.stage');
@@ -277,17 +283,21 @@ function paint(g,st,al=1){
     for(let k=1;k<=n;k++)nibAt(lg,a.x+(b.x-a.x)*k/n,a.y+(b.y-a.y)*k/n,st.size)}
   g.save();g.globalCompositeOperation='multiply';g.globalAlpha=al;g.drawImage(lay,bx,by,bw,bh,bx,by,bw,bh);g.restore();   // text stays crisp
 }
-function rebake(){bkg.drawImage(img,0,0,bk.width,bk.height);strokes.forEach(s=>paint(bkg,s))}
-function render(){raf=0;ctx.drawImage(showOrig?img:bk,0,0,cv.width,cv.height);if(showOrig)return;if(cur&&cur.pts)paint(ctx,cur);if(demo&&demo.st)paint(ctx,demo.st,demo.a);fx.forEach(o=>paint(ctx,o.st,o.a))}
+function rebake(){bkg.fillStyle='#fff';bkg.fillRect(0,0,bk.width,bk.height);bkg.drawImage(img,0,0,bk.width,bk.height);strokes.forEach(s=>paint(bkg,s))}
+function render(){raf=0;ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(showOrig?img:bk,0,0,cv.width,cv.height);if(showOrig)return;if(cur&&cur.pts)paint(ctx,cur);if(demo&&demo.st)paint(ctx,demo.st,demo.a);fx.forEach(o=>paint(ctx,o.st,o.a))}
 function draw(){if(!raf)raf=requestAnimationFrame(render)}
 
 /* ---------- zoom presets + minimap ---------- */
-const mm=$('mm'),mv=$('mv');
-function thumb(im){const k=96/Math.max(im.width,im.height),w=Math.round(im.width*k),h=Math.round(im.height*k),t=document.createElement('canvas');t.width=w*2;t.height=h*2;t.getContext('2d').drawImage(im,0,0,w*2,h*2);
-  mm.style.width=w+'px';mm.style.height=h+'px';mm.style.backgroundImage='url('+t.toDataURL('image/jpeg',.7)+')'}
+const mm=$('mm'),mv=$('mv'),mmc=$('mmc');let lnHint=0;
+function thumb(im){const k=96/Math.max(im.width,im.height),w=Math.round(im.width*k),h=Math.round(im.height*k);mm.style.width=w+'px';mm.style.height=h+'px';mmc.width=w*2;mmc.height=h*2}
+function drawMM(){if(img&&mmc.width)mmc.getContext('2d').drawImage(showOrig?img:bk,0,0,mmc.width,mmc.height)}   // live: shows your highlights
 function updMM(){
-  document.querySelectorAll('#pre button').forEach(b=>b.classList.toggle('on',Math.abs(S-b.dataset.z)<.01));
-  const on=S>1.001&&img;mm.classList.toggle('on',!!on);if(!on)return;
+  const wz=(stage.clientWidth-24)/Math.max(cv.offsetWidth,1);
+  document.querySelectorAll('#pre button').forEach(b=>{const w=b.dataset.z==='w',z=w?wz:+b.dataset.z;b.classList.toggle('on',Math.abs(S-z)<.01);if(w)b.hidden=wz<1.08});
+  const on=S>1.001&&img,ln=on&&lines.length>1;if(on&&!mm.classList.contains('on'))drawMM();mm.classList.toggle('on',!!on);$('ln').classList.toggle('on',ln);
+  if(ln){const c=curLine();$('lc').textContent=(c+1)+'/'+lines.length;$('lu').disabled=c<=0;$('ld').disabled=c>=lines.length-1;
+    if(!lnHint){lnHint=1;setTimeout(()=>toast('Step through lines with ▲ ▼'),600)}}
+  if(!on)return;
   const w=cv.offsetWidth*S,h=cv.offsetHeight*S,x0=clamp((-cv.offsetLeft-TX)/w,0,1),x1=clamp((stage.clientWidth-cv.offsetLeft-TX)/w,0,1),y0=clamp((-cv.offsetTop-TY)/h,0,1),y1=clamp((stage.clientHeight-cv.offsetTop-TY)/h,0,1);
   Object.assign(mv.style,{left:x0*100+'%',top:y0*100+'%',width:(x1-x0)*100+'%',height:(y1-y0)*100+'%'})}
 function mpan(e){e.stopPropagation();const r=mm.getBoundingClientRect(),fx=clamp((e.clientX-r.left)/r.width,0,1),fy=clamp((e.clientY-r.top)/r.height,0,1);
@@ -295,7 +305,15 @@ function mpan(e){e.stopPropagation();const r=mm.getBoundingClientRect(),fx=clamp
 mm.onpointerdown=e=>{mm.setPointerCapture(e.pointerId);mpan(e);mm.onpointermove=mpan};
 mm.onpointerup=mm.onpointercancel=e=>{e.stopPropagation();mm.onpointermove=null};
 $('pre').onpointerdown=$('pre').onpointerup=e=>e.stopPropagation();
-$('pre').onclick=e=>{const b=e.target.closest('button');if(b)zoomAt(stage.clientWidth/2,stage.clientHeight/2,+b.dataset.z,0,true)};
+$('pre').onclick=e=>{const b=e.target.closest('button');if(!b)return;
+  if(b.dataset.z==='w'){S=(stage.clientWidth-24)/cv.offsetWidth;TX=12-cv.offsetLeft;TY=12-cv.offsetTop;applyView(true)}   // fill the width, page top aligned
+  else zoomAt(stage.clientWidth/2,stage.clientHeight/2,+b.dataset.z,0,true)};
+/* ---------- line stepper: jump to the next/previous text line at the current zoom ---------- */
+function curLine(){if(!lines.length)return -1;const y=(stage.clientHeight/2-cv.offsetTop-TY)/(S*cv.offsetHeight/cv.height);let b=0,bd=1e9;lines.forEach((l,i)=>{const d=Math.abs(l.cy-y);if(d<bd){bd=d;b=i}});return b}
+function goLine(i){i=clamp(i,0,lines.length-1);const L=lines[i],k=cv.offsetWidth/cv.width,vw=stage.clientWidth/(S*k),px=clamp(RTL?L.x1-vw*.42:L.x0+vw*.42,0,cv.width);
+  TX=stage.clientWidth/2-cv.offsetLeft-S*px*k;TY=stage.clientHeight/2-cv.offsetTop-S*L.cy*k;applyView(true);buzz(6)}
+const lineStep=d=>{if(lines.length)goLine(curLine()+d)};
+$('lu').onclick=()=>lineStep(-1);$('ld').onclick=()=>lineStep(1);$('ln').onpointerdown=$('ln').onpointerup=e=>e.stopPropagation();
 
 /* ---------- zoom / pan ---------- */
 let zShown=100,zRaf=0,hudS=1,hudT;
@@ -462,7 +480,7 @@ function end(e){
 stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',end);
 
 /* ---------- UI ---------- */
-function sync(){$('undo').disabled=!strokes.length;$('redo').disabled=!redo.length;$('revert').disabled=!strokes.length;$('cmp').disabled=!strokes.length;$('size').disabled=mode==='smart';$('r2').classList.toggle('nosize',mode==='smart');placeMarks();saveSession()}
+function sync(){if(S>1.001)drawMM();$('undo').disabled=!strokes.length;$('redo').disabled=!redo.length;$('revert').disabled=!strokes.length;$('cmp').disabled=!strokes.length;$('size').disabled=mode==='smart';$('r2').classList.toggle('nosize',mode==='smart');placeMarks();saveSession()}
 function setTool(t){tool=t;showGuide(null);['hl','ul','er','pan'].forEach(k=>$('t-'+k).setAttribute('aria-pressed',t===k));stage.style.cursor=t==='pan'?'grab':t==='er'?'cell':'crosshair'}
 function setMode(m,auto){mode=m;showGuide(null);$('seg').style.setProperty('--i',['smart','straight','free'].indexOf(m));document.querySelectorAll('#seg button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.m===m));setTool(tool==='ul'?'ul':'hl');sync();toast(MODES[m]);if(!auto)store()}
 document.querySelectorAll('#seg button').forEach(b=>b.onclick=()=>setMode(b.dataset.m));
@@ -507,11 +525,37 @@ cmp.onpointerdown=e=>{cmp.setPointerCapture(e.pointerId);hold(1)};
 cmp.oncontextmenu=e=>e.preventDefault();
 addEventListener('keyup',e=>{if(e.key==='c')hold(0)});
 $('zi').onclick=()=>zc(1);$('zo').onclick=()=>zc(-1);$('zl').onclick=()=>{S=1;applyView(true)};
+/* ---------- open any image: native decode first, then fallbacks (SVG sizing, HEIC, TIFF, anything createImageBitmap knows) ---------- */
+const isImg=f=>f&&(f.type.startsWith('image/')||/\.(heic|heif|tiff?|bmp|avif|svg|ico|jfif|webp|gif|png|jpe?g)$/i.test(f.name||''));
+const tryLoad=b=>new Promise((ok,no)=>{const u=URL.createObjectURL(b),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);i.width>0?ok(b):no()};i.onerror=()=>{URL.revokeObjectURL(u);no()};i.src=u});
+const lib=u=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)});
+const pngOf=c=>new Promise(r=>c.toBlob(r,'image/png'));
+async function svgBlob(f){
+  const r=new DOMParser().parseFromString(await f.text(),'image/svg+xml').documentElement,vb=(r.getAttribute('viewBox')||'').split(/[\s,]+/).map(Number);
+  let w=parseFloat(r.getAttribute('width')),h=parseFloat(r.getAttribute('height'));
+  if(vb.length===4&&vb[2]>0&&vb[3]>0){w=vb[2];h=vb[3]}else if(!(w>0&&h>0))w=h=1000;
+  const k=1600/Math.max(w,h);r.setAttribute('width',w*k);r.setAttribute('height',h*k);if(!r.getAttribute('viewBox'))r.setAttribute('viewBox','0 0 '+w+' '+h);
+  return new Blob([new XMLSerializer().serializeToString(r)],{type:'image/svg+xml'})}
+async function openFile(f){
+  toast('Opening…');const k=((f.name||'').split('.').pop()||'').toLowerCase()+' '+f.type;let b=f;
+  try{
+    if(/svg/.test(k))b=await svgBlob(f);
+    try{await tryLoad(b)}catch(e){
+      if(/heic|heif/.test(k)){await lib('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');b=await heic2any({blob:f,toType:'image/png'});if(Array.isArray(b))b=b[0]}
+      else if(/tif/.test(k)){await lib('https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js');
+        const buf=await f.arrayBuffer(),ifd=UTIF.decode(buf)[0];UTIF.decodeImage(buf,ifd);
+        const c=document.createElement('canvas');c.width=ifd.width;c.height=ifd.height;
+        c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(UTIF.toRGBA8(ifd)),ifd.width,ifd.height),0,0);b=await pngOf(c)}
+      else{const bm=await createImageBitmap(f),c=document.createElement('canvas');c.width=bm.width;c.height=bm.height;c.getContext('2d').drawImage(bm,0,0);b=await pngOf(c)}
+    }
+    load(URL.createObjectURL(b),false,b);
+  }catch(e){toast('Can’t open this file. Try PNG, JPG, HEIC, TIFF, WebP or SVG')}
+}
 $('open').onclick=()=>$('file').click();
-$('file').onchange=e=>{const f=e.target.files[0];if(f)load(URL.createObjectURL(f),false,f)};
-addEventListener('paste',e=>{const f=[...(e.clipboardData?.files||[])].find(f=>f.type.startsWith('image/'));if(f)load(URL.createObjectURL(f),false,f)});
+$('file').onchange=e=>{const f=e.target.files[0];if(f)openFile(f);e.target.value=''};
+addEventListener('paste',e=>{const f=[...(e.clipboardData?.files||[])].find(isImg);if(f)openFile(f)});
 stage.addEventListener('dragover',e=>e.preventDefault());
-stage.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(f&&f.type.startsWith('image/'))load(URL.createObjectURL(f),false,f)});
+stage.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(isImg(f))openFile(f)});
 let fmt='png',lastBlob=null,bt=0,qt;
 const blobOf=(t,q)=>new Promise(r=>cv.toBlob(r,t,q));
 async function pdfOf(jb,w,h){                       // minimal single-page PDF wrapping the JPEG
@@ -540,11 +584,13 @@ $('dl').onclick=()=>{if(!lastBlob)return;const a=document.createElement('a');a.h
 if(!window.ClipboardItem)$('copy').style.display='none';
 $('copy').onclick=async()=>{try{await navigator.clipboard.write([new ClipboardItem({'image/png':await blobOf('image/png')})]);toast('Copied as PNG')}catch(e){toast('Copy not allowed here')}};
 $('close').onclick=()=>$('sheet').classList.remove('on');
+$('sheet').onclick=e=>{if(e.target.id==='sheet')$('sheet').classList.remove('on')};
 addEventListener('keydown',e=>{
-  if(e.key==='Escape'){openPick(false);closeNote()}if(e.target.id==='hx'||e.target.id==='nt')return;
+  if(e.key==='Escape'){openPick(false);closeNote();$('sheet').classList.remove('on')}if(e.target.id==='hx'||e.target.id==='nt')return;
   if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?rdo():undo();return}
   const k={1:'smart',2:'straight',3:'free'}[e.key];if(k)setMode(k);
   if(e.key==='c'&&!e.metaKey&&!e.ctrlKey&&strokes.length)hold(1);if(e.key==='+'||e.key==='=')zc(1);if(e.key==='-')zc(-1);if(e.key==='0'){S=1;applyView(true)}
+  if(S>1.001&&(e.key==='ArrowDown'||e.key==='ArrowUp')){e.preventDefault();lineStep(e.key==='ArrowDown'?1:-1)}
   if(e.key==='h')setTool('hl');if(e.key==='u')setTool('ul');if(e.key==='e')setTool('er');
 });
 Promise.all([(document.fonts?document.fonts.load('46px Amiri','كَ'):Promise.resolve()).catch(()=>{}),idb('get').catch(()=>null)]).then(([,r])=>{
