@@ -52,7 +52,7 @@ input[type=range]:disabled{opacity:.3}
 .tools button:disabled{opacity:.3}
 .tools i{width:1px;height:24px;background:var(--sel);margin:0 6px}
 svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
-#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translate(-50%,-8px);padding:8px 14px;border-radius:16px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s,transform .25s;white-space:normal;width:max-content;max-width:88vw;z-index:12}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 70px);transform:translate(-50%,-10px) scale(.95);padding:8px 14px;border-radius:16px;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s,transform .4s cubic-bezier(.34,1.4,.64,1);white-space:normal;width:max-content;max-width:88vw;z-index:12}
 #toast.on{opacity:1;transform:translate(-50%,0)}
 #sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;visibility:hidden;opacity:0;transition:opacity .25s,visibility .25s;align-items:center;justify-content:center;flex-direction:column;gap:14px;padding:20px;z-index:9;-webkit-user-select:auto;user-select:auto}
 #sheet.on{visibility:visible;opacity:1}
@@ -115,7 +115,7 @@ canvas.in{animation:fadein .7s cubic-bezier(.2,.8,.2,1)}
 @keyframes fadein{from{opacity:0;filter:blur(10px)}}
 @media (hover:hover){.tools button:hover:not([aria-pressed="true"]):not(:disabled),.zoom button:hover,.txt:hover:not(.go){background:var(--sel)}.txt.go:hover{filter:brightness(1.12)}}
 button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
 
 .sz{display:flex;align-items:center;gap:8px}#sp{width:7px;height:10px;border-radius:2px;background:var(--hc);flex:none;transition:height .15s}
 #sv{min-width:24px;font-size:13px;font-weight:600;font-variant-numeric:tabular-nums}.nosize .sz{display:none}
@@ -133,6 +133,15 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 .ln.on{opacity:1;visibility:visible;transform:translateY(-50%)}
 .ln button{width:36px;height:36px;border:0;background:none;color:var(--ink);display:grid;place-items:center;border-radius:50%;cursor:pointer}.ln button:active{background:var(--sel)}.ln button:disabled{opacity:.3}
 .ln span{font-size:12px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-.01em;min-width:34px;text-align:center;padding:2px 0}
+
+.zoom button,.pre button,.ln button,.seg button,.tools button{transition:background .2s,color .2s,opacity .2s,transform .2s cubic-bezier(.34,1.56,.64,1)}
+.zoom button#zl{transition:color .25s,background .25s,transform .2s cubic-bezier(.34,1.56,.64,1)}
+.zoom button:active:not(:disabled),.pre button:active,.ln button:active:not(:disabled){transform:scale(.88)}.seg button:active{transform:scale(.94)}
+.tools svg{transition:transform .25s cubic-bezier(.34,1.56,.64,1)}.tools #undo:active svg{transform:translateX(-3px) rotate(-14deg)}.tools #redo:active svg{transform:translateX(3px) rotate(14deg)}
+.sw button,.cp{transition:outline-color .2s,transform .35s cubic-bezier(.34,1.56,.64,1)}
+#mm{transform:scale(.88);transform-origin:100% 100%;transition:opacity .25s,visibility .25s,transform .45s cubic-bezier(.34,1.4,.64,1)}#mm.on{transform:none}
+.stage{transition:box-shadow .2s}.stage.drop{box-shadow:inset 0 0 0 3px var(--acc)}
+@media (max-height:500px) and (orientation:landscape){.ln{top:40%}#mm{scale:.72}}
 </style>
 </head>
 <body>
@@ -184,7 +193,7 @@ button:focus-visible,input:focus-visible{outline:2px solid var(--acc);outline-of
 <div id="note" class="glass" role="dialog" aria-label="Note"><textarea id="nt" rows="3" maxlength="400" placeholder="Add a note to this highlight…"></textarea><div class="nrow"><button class="txt" id="ndel">Remove note</button><button class="txt go" id="ndone">Done</button></div></div>
 <div id="toast" class="glass" role="status"></div>
 <div id="sheet"><img id="shot" alt="Result"><p id="info"></p><div class="seg" id="fmt" role="group" aria-label="Export format"><button data-f="png" aria-pressed="true">PNG</button><button data-f="jpg" aria-pressed="false">JPG</button><button data-f="pdf" aria-pressed="false">PDF</button></div><label id="qr" class="off"><span>Quality</span><input type="range" id="q" min="50" max="100" value="92"><b id="qv">92%</b></label><div class="xrow"><button class="txt" id="share">Share</button><button class="txt" id="dl">Download</button><button class="txt" id="copy">Copy</button><button class="txt go" id="close">Done</button></div></div>
-<input type="file" id="file" accept="image/*,.heic,.heif,.tif,.tiff,.bmp,.avif,.svg,.ico,.jfif,.webp" hidden>
+<input type="file" id="file" accept="image/*,.heic,.heif,.hif,.tif,.tiff,.bmp,.avif,.svg,.ico,.jfif,.jxl,.dng,.cr2,.cr3,.nef,.arw,.orf,.rw2,.raf" hidden>
 <script>
 const $=id=>document.getElementById(id);
 const cv=$('c'),ctx=cv.getContext('2d'),stage=document.querySelector('.stage');
@@ -525,36 +534,48 @@ cmp.onpointerdown=e=>{cmp.setPointerCapture(e.pointerId);hold(1)};
 cmp.oncontextmenu=e=>e.preventDefault();
 addEventListener('keyup',e=>{if(e.key==='c')hold(0)});
 $('zi').onclick=()=>zc(1);$('zo').onclick=()=>zc(-1);$('zl').onclick=()=>{S=1;applyView(true)};
-/* ---------- open any image: native decode first, then fallbacks (SVG sizing, HEIC, TIFF, anything createImageBitmap knows) ---------- */
-const isImg=f=>f&&(f.type.startsWith('image/')||/\.(heic|heif|tiff?|bmp|avif|svg|ico|jfif|webp|gif|png|jpe?g)$/i.test(f.name||''));
-const tryLoad=b=>new Promise((ok,no)=>{const u=URL.createObjectURL(b),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);i.width>0?ok(b):no()};i.onerror=()=>{URL.revokeObjectURL(u);no()};i.src=u});
-const lib=u=>new Promise((ok,no)=>{const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=no;document.head.appendChild(e)});
-const pngOf=c=>new Promise(r=>c.toBlob(r,'image/png'));
+/* ---------- open any image: <img> decode -> browser bitmap decode -> HEIC/TIFF decoders -> embedded JPEG (RAW etc.) ---------- */
+const isImg=f=>f&&(f.type.startsWith('image/')||/\.(heic|heif|hif|tiff?|bmp|avif|svg|ico|jfif|jpe|webp|gif|png|jpe?g|jxl|dng|cr2|cr3|nef|arw|orf|rw2|raf|psd)$/i.test(f.name||''));
+const dec=b=>new Promise((ok,no)=>{const u=URL.createObjectURL(b),i=new Image();i.onload=()=>{URL.revokeObjectURL(u);i.naturalWidth>0?ok(i):no()};i.onerror=()=>{URL.revokeObjectURL(u);no()};i.src=u});
+const lib=urls=>new Promise((ok,no)=>{const t=[...urls],nx=()=>{const u=t.shift();if(!u)return no();const e=document.createElement('script');e.src=u;e.onload=ok;e.onerror=()=>{e.remove();nx()};document.head.appendChild(e)};nx()});
+const toBlob=(c,t='image/png',q)=>new Promise(r=>c.toBlob(r,t,q));
+async function viaBitmap(f){const bm=await createImageBitmap(f,{imageOrientation:'from-image'}).catch(()=>createImageBitmap(f)),c=document.createElement('canvas');c.width=bm.width;c.height=bm.height;c.getContext('2d').drawImage(bm,0,0);return toBlob(c)}
+async function embeddedJpeg(f){
+  const u=new Uint8Array(await f.arrayBuffer()),st=[];
+  for(let i=0;i<u.length-3;i++)if(u[i]===255&&u[i+1]===216&&u[i+2]===255)st.push(i);
+  for(const g of st.map((a,i)=>({a,e:st[i+1]??u.length})).sort((x,y)=>(y.e-y.a)-(x.e-x.a)).slice(0,4)){
+    if(g.e-g.a<20000)break;const b=new Blob([u.subarray(g.a,g.e)],{type:'image/jpeg'});try{await dec(b);return b}catch(e){}}
+  throw 0}
 async function svgBlob(f){
   const r=new DOMParser().parseFromString(await f.text(),'image/svg+xml').documentElement,vb=(r.getAttribute('viewBox')||'').split(/[\s,]+/).map(Number);
   let w=parseFloat(r.getAttribute('width')),h=parseFloat(r.getAttribute('height'));
   if(vb.length===4&&vb[2]>0&&vb[3]>0){w=vb[2];h=vb[3]}else if(!(w>0&&h>0))w=h=1000;
   const k=1600/Math.max(w,h);r.setAttribute('width',w*k);r.setAttribute('height',h*k);if(!r.getAttribute('viewBox'))r.setAttribute('viewBox','0 0 '+w+' '+h);
   return new Blob([new XMLSerializer().serializeToString(r)],{type:'image/svg+xml'})}
+async function shrink(b,i){                         // very large photos are resized first so mobile browsers don't run out of memory
+  const w=i.naturalWidth,h=i.naturalHeight;if(w*h<=36e6)return b;toast('Large image, resizing…');
+  const k=3600/Math.max(w,h),bm=await createImageBitmap(b,{resizeWidth:Math.round(w*k),resizeHeight:Math.round(h*k),resizeQuality:'high',imageOrientation:'from-image'}),c=document.createElement('canvas');
+  c.width=bm.width;c.height=bm.height;c.getContext('2d').drawImage(bm,0,0);return toBlob(c,'image/jpeg',.95)}
 async function openFile(f){
-  toast('Opening…');const k=((f.name||'').split('.').pop()||'').toLowerCase()+' '+f.type;let b=f;
-  try{
-    if(/svg/.test(k))b=await svgBlob(f);
-    try{await tryLoad(b)}catch(e){
-      if(/heic|heif/.test(k)){await lib('https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js');b=await heic2any({blob:f,toType:'image/png'});if(Array.isArray(b))b=b[0]}
-      else if(/tif/.test(k)){await lib('https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js');
-        const buf=await f.arrayBuffer(),ifd=UTIF.decode(buf)[0];UTIF.decodeImage(buf,ifd);
-        const c=document.createElement('canvas');c.width=ifd.width;c.height=ifd.height;
-        c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(UTIF.toRGBA8(ifd)),ifd.width,ifd.height),0,0);b=await pngOf(c)}
-      else{const bm=await createImageBitmap(f),c=document.createElement('canvas');c.width=bm.width;c.height=bm.height;c.getContext('2d').drawImage(bm,0,0);b=await pngOf(c)}
-    }
-    load(URL.createObjectURL(b),false,b);
-  }catch(e){toast('Can’t open this file. Try PNG, JPG, HEIC, TIFF, WebP or SVG')}
+  toast('Opening…');const k=((f.name||'').split('.').pop()||'').toLowerCase()+' '+f.type;let b=f,i=null;
+  const steps=[
+    async()=>{if(/svg/.test(k))b=await svgBlob(f).catch(()=>f);return dec(b)},
+    async()=>{b=await viaBitmap(f);return dec(b)},
+    async()=>{if(!/heic|heif|hif/.test(k))throw 0;await lib(['https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js','https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js']);
+      const r=await heic2any({blob:f,toType:'image/png'});b=Array.isArray(r)?r[0]:r;return dec(b)},
+    async()=>{if(!/tif/.test(k))throw 0;await lib(['https://cdn.jsdelivr.net/npm/utif@3.1.0/UTIF.js','https://unpkg.com/utif@3.1.0/UTIF.js']);
+      const buf=await f.arrayBuffer(),ifd=UTIF.decode(buf)[0];UTIF.decodeImage(buf,ifd);const c=document.createElement('canvas');c.width=ifd.width;c.height=ifd.height;
+      c.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(UTIF.toRGBA8(ifd)),ifd.width,ifd.height),0,0);b=await toBlob(c);return dec(b)},
+    async()=>{b=await embeddedJpeg(f);return dec(b)}];
+  for(const st of steps){try{i=await st();break}catch(e){}}
+  if(!i)return toast(/heic|heif|hif|tif/.test(k)?'Couldn’t decode this file. Check your connection and try again':'This file can’t be opened as an image');
+  try{b=await shrink(b,i)}catch(e){}
+  load(URL.createObjectURL(b),false,b);
 }
-$('open').onclick=()=>$('file').click();
-$('file').onchange=e=>{const f=e.target.files[0];if(f)openFile(f);e.target.value=''};
+$('open').onclick=()=>{$('file').value='';$('file').click()};
+$('file').onchange=e=>{const f=e.target.files[0];if(f)openFile(f)};
 addEventListener('paste',e=>{const f=[...(e.clipboardData?.files||[])].find(isImg);if(f)openFile(f)});
-stage.addEventListener('dragover',e=>e.preventDefault());
+['dragenter','dragover'].forEach(k=>stage.addEventListener(k,e=>{e.preventDefault();stage.classList.add('drop')}));['dragleave','drop'].forEach(k=>stage.addEventListener(k,()=>stage.classList.remove('drop')));
 stage.addEventListener('drop',e=>{e.preventDefault();const f=e.dataTransfer.files[0];if(isImg(f))openFile(f)});
 let fmt='png',lastBlob=null,bt=0,qt;
 const blobOf=(t,q)=>new Promise(r=>cv.toBlob(r,t,q));
